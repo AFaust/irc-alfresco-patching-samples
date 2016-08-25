@@ -1,4 +1,4 @@
-package de.axelfaust.alfresco.examples.patching.repo.spring;
+package de.axelfaust.alfresco.examples.patching.common.spring;
 
 import java.util.ArrayList;
 import java.util.List;

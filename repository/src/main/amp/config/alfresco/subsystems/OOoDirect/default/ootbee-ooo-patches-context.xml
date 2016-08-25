@@ -3,7 +3,7 @@
            http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-    <bean class="de.axelfaust.alfresco.examples.patching.repo.spring.ImplementationClassReplacingBeanFactoryPostProcessor">
+    <bean id="OOTBee-transformer-OOoWorker-patch" class="de.axelfaust.alfresco.examples.patching.common.spring.ImplementationClassReplacingBeanFactoryPostProcessor">
         <property name="targetBeanName" value="transformer.worker.OpenOffice" />
         <property name="active" value="${OOTBee.patches.transformer.OOoWorker.enabled}" />
         <property name="originalClassName" value="org.alfresco.repo.content.transform.OpenOfficeContentTransformerWorker" />

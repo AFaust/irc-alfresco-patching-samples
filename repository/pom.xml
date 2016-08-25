@@ -17,6 +17,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>de.axelfaust.alfresco.examples.patching.common</artifactId>
+            <version>0.0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>${alfresco.groupId}</groupId>
             <artifactId>alfresco-remote-api</artifactId>
         </dependency>

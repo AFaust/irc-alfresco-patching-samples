@@ -1,4 +1,4 @@
-package de.axelfaust.alfresco.examples.patching.repo.spring;
+package de.axelfaust.alfresco.examples.patching.common.spring;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;

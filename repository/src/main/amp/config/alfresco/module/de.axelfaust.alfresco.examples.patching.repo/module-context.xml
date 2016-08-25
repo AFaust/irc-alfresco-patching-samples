@@ -3,9 +3,9 @@
            http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-    <bean class="de.axelfaust.alfresco.examples.patching.repo.spring.ImplementationClassReplacingBeanFactoryPostProcessor">
+    <bean id="OOTBee-CMISConnector-patch" class="de.axelfaust.alfresco.examples.patching.common.spring.ImplementationClassReplacingBeanFactoryPostProcessor">
         <property name="targetBeanName" value="CMISConnector" />
-        <property name="active" value="${OOTBee.patches.opencmis.fixedCMISConnector.enabled}" />
+        <property name="active" value="${OOTBee.patches.opencmis.CMISConnector.enabled}" />
         <property name="originalClassName" value="org.alfresco.opencmis.CMISConnector" />
         <property name="replacementClassName" value="de.axelfaust.alfresco.examples.patching.repo.opencmis.PatchedCMISConnector" />
     </bean>
