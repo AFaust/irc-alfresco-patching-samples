@@ -3,6 +3,18 @@
            http://www.springframework.org/schema/beans
            http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
+    <!-- This is simply a workaround for the lack of logging configuration support in Share -->
+    <bean id="log4JHierarchyInit" class="de.axelfaust.alfresco.examples.patching.share.logging.Log4jHierarchyInit">
+        <property name="extraLog4jUrls">
+            <list>
+                <value>classpath*:alfresco/enterprise/*-log4j.properties</value>
+                <value>classpath*:alfresco/module/*/log4j.properties</value>
+                <value>classpath*:alfresco/web-extension/*-log4j.properties</value>
+                <value>classpath*:alfresco/web-extension/dev-log4j.properties</value>
+            </list>
+        </property>
+    </bean>
+
     <!-- This is simply a workaround for the lack of module support in Share -->
     <import resource="classpath*:alfresco/module/*/module-context.xml" />
 
