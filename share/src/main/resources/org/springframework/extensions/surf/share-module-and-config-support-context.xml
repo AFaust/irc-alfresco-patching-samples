@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <!-- This is simply a workaround for the lack of module support in Share -->
+    <import resource="classpath*:alfresco/module/*/module-context.xml" />
+
+    <!-- This is simply a workaround for the lack of global configuration support in Share -->
+    <bean id="global-properties" class="org.alfresco.config.JndiPropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath*:alfresco/share-global.properties</value>
+                <value>classpath*:alfresco/enterprise/share-global.properties</value>
+                <value>classpath*:alfresco/module/*/share-global.properties</value>
+                <value>classpath*:share-global.properties</value>
+            </list>
+        </property>
+        <property name="systemPropertiesModeName">
+            <value>SYSTEM_PROPERTIES_MODE_OVERRIDE</value>
+        </property>
+        <property name="propertiesPersister">
+            <bean class="org.alfresco.config.AlfrescoPropertiesPersister" />
+        </property>
+    </bean>
+
+    <bean id="common-placeholder-configurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" abstract="true">
+        <property name="valueSeparator">
+            <null />
+        </property>
+        <property name="ignoreUnresolvablePlaceholders">
+            <value>true</value>
+        </property>
+        <property name="searchSystemEnvironment">
+            <value>false</value>
+        </property>
+        <property name="propertiesPersister">
+            <bean class="org.alfresco.config.AlfrescoPropertiesPersister" />
+        </property>
+    </bean>
+
+    <bean id="share-properties" parent="common-placeholder-configurer">
+        <property name="properties">
+            <ref bean="global-properties" />
+        </property>
+        <property name="systemPropertiesModeName">
+            <value>SYSTEM_PROPERTIES_MODE_NEVER</value>
+        </property>
+    </bean>
+</beans>
