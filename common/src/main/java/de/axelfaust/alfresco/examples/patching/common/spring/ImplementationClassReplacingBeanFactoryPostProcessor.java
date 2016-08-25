@@ -1,6 +1,9 @@
 package de.axelfaust.alfresco.examples.patching.common.spring;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -11,8 +14,12 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
  *
  * @author Axel Faust
  */
-public class ImplementationClassReplacingBeanFactoryPostProcessor implements BeanFactoryPostProcessor
+public class ImplementationClassReplacingBeanFactoryPostProcessor implements BeanFactoryPostProcessor, BeanNameAware
 {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImplementationClassReplacingBeanFactoryPostProcessor.class);
+
+    protected String beanName;
 
     protected String originalClassName;
 
@@ -21,6 +28,15 @@ public class ImplementationClassReplacingBeanFactoryPostProcessor implements Bea
     protected String targetBeanName;
 
     protected boolean active;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBeanName(final String name)
+    {
+        this.beanName = name;
+    }
 
     /**
      * @param originalClassName
@@ -67,12 +83,32 @@ public class ImplementationClassReplacingBeanFactoryPostProcessor implements Bea
         if (this.active && this.targetBeanName != null && this.replacementClassName != null)
         {
             final BeanDefinition beanDefinition = beanFactory.getBeanDefinition(this.targetBeanName);
-            if (beanDefinition != null
-                    && (this.originalClassName == null || this.originalClassName.equals(beanDefinition.getBeanClassName())))
+            if (beanDefinition != null)
             {
-                beanDefinition.setBeanClassName(this.replacementClassName);
+                if (this.originalClassName == null || this.originalClassName.equals(beanDefinition.getBeanClassName()))
+                {
+                    LOGGER.info("[{}] Patching implementation class Spring bean {} to {}", this.beanName, this.targetBeanName,
+                            this.replacementClassName);
+                    beanDefinition.setBeanClassName(this.replacementClassName);
+                }
+                else
+                {
+                    LOGGER.info("[{}] patch will not be applied - class of bean {} does not match expected implementation {}",
+                            this.beanName, this.targetBeanName, this.originalClassName);
+                }
+            }
+            else
+            {
+                LOGGER.info("[{}] patch cannot be applied - no bean with name {} has been defined", this.beanName, this.targetBeanName);
             }
         }
+        else if (!this.active)
+        {
+            LOGGER.info("[{}] patch will not be applied as it has been marked as inactive", this.beanName);
+        }
+        else
+        {
+            LOGGER.warn("[{}] patch cannnot be applied as its configuration is incomplete", this.beanName);
+        }
     }
-
 }

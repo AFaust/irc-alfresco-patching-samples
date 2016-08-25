@@ -3,9 +3,12 @@ package de.axelfaust.alfresco.examples.patching.common.spring;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValue;
+import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -18,8 +21,12 @@ import org.springframework.beans.factory.support.ManagedList;
  *
  * @author Axel Faust
  */
-public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPostProcessor
+public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPostProcessor, BeanNameAware
 {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyAlteringBeanFactoryPostProcessor.class);
+
+    protected String beanName;
 
     protected String targetBeanName;
 
@@ -44,6 +51,15 @@ public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPost
     protected boolean merge;
 
     protected boolean mergeParent;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBeanName(final String name)
+    {
+        this.beanName = name;
+    }
 
     /**
      * @param targetBeanName
@@ -155,6 +171,8 @@ public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPost
             final BeanDefinition beanDefinition = beanFactory.getBeanDefinition(this.targetBeanName);
             if (beanDefinition != null)
             {
+                LOGGER.info("[{}] Patching property {} of Spring bean {}", this.beanName, this.propertyName, this.targetBeanName);
+
                 final MutablePropertyValues propertyValues = beanDefinition.getPropertyValues();
                 final PropertyValue configuredValue = propertyValues.getPropertyValue(this.propertyName);
 
@@ -162,6 +180,9 @@ public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPost
 
                 if (this.values != null || this.beanReferenceNames != null)
                 {
+                    LOGGER.debug("[{}] List of values / bean reference names has been configured - treating property {} of {} as <list>",
+                            this.beanName, this.propertyName, this.targetBeanName);
+
                     final ManagedList<Object> list = new ManagedList<>();
 
                     if (this.merge && configuredValue != null)
@@ -175,16 +196,22 @@ public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPost
                             list.setSource(oldList.getSource());
 
                             list.addAll(oldList);
+
+                            LOGGER.debug("[{}] Merged existing value list values: {}", this.beanName, oldList);
                         }
                     }
 
                     List<Object> valuesToAdd;
                     if (this.values != null)
                     {
+                        LOGGER.debug("[{}] List of configured values for {} of {}: ", this.beanName, this.propertyName,
+                                this.targetBeanName, this.values);
                         valuesToAdd = this.values;
                     }
                     else
                     {
+                        LOGGER.debug("[{}] List of configured bean reference names for {} of {}: ", this.beanName, this.propertyName,
+                                this.targetBeanName, this.values);
                         valuesToAdd = new ArrayList<Object>();
                         for (final String beanReferenceName : this.beanReferenceNames)
                         {
@@ -194,26 +221,41 @@ public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPost
 
                     if (this.addAsFirst)
                     {
+                        LOGGER.debug("[{}] Adding new entries at start of list for {} of {}", this.beanName, this.propertyName,
+                                this.targetBeanName);
                         list.addAll(0, valuesToAdd);
                     }
                     else if (this.addAtIndex >= 0 && this.addAtIndex < list.size())
                     {
+                        LOGGER.debug("[{}] Adding new entries at position {} of list for {} of {}", this.beanName,
+                                String.valueOf(this.addAtIndex), this.propertyName, this.targetBeanName);
                         list.addAll(this.addAtIndex, valuesToAdd);
                     }
                     else
                     {
+                        LOGGER.debug("[{}] Adding new entries at end of list for {} of {}", this.beanName, this.propertyName,
+                                this.targetBeanName);
                         list.addAll(valuesToAdd);
                     }
 
+                    if (!list.isMergeEnabled() && this.mergeParent)
+                    {
+                        LOGGER.debug("[{}] Enabling \"merge\" for <list> on {} of {}", this.beanName, this.propertyName,
+                                this.targetBeanName);
+                    }
                     list.setMergeEnabled(list.isMergeEnabled() || this.mergeParent);
                     value = list;
                 }
                 else if (this.value != null)
                 {
+                    LOGGER.debug("[{}] Setting new value {} for {} of {}", this.beanName, this.value, this.propertyName,
+                            this.targetBeanName);
                     value = this.value;
                 }
                 else if (this.beanReferenceName != null)
                 {
+                    LOGGER.debug("[{}] Setting new bean reference to {} for {} of {}", this.beanName, this.beanReferenceName,
+                            this.propertyName, this.targetBeanName);
                     value = new RuntimeBeanReference(this.beanReferenceName);
                 }
                 else
@@ -228,10 +270,22 @@ public class PropertyAlteringBeanFactoryPostProcessor implements BeanFactoryPost
                 }
                 else if (configuredValue != null)
                 {
+                    LOGGER.debug("[{}] Removing {} property definition from Spring bean {}", this.propertyName, this.targetBeanName);
                     propertyValues.removePropertyValue(configuredValue);
                 }
             }
+            else
+            {
+                LOGGER.info("[{}] patch cannot be applied - no bean with name {} has been defined", this.beanName, this.targetBeanName);
+            }
         }
-
+        else if (!this.active)
+        {
+            LOGGER.info("[{}] patch will not be applied as it has been marked as inactive", this.beanName);
+        }
+        else
+        {
+            LOGGER.warn("[{}] patch cannnot be applied as its configuration is incomplete", this.beanName);
+        }
     }
 }
