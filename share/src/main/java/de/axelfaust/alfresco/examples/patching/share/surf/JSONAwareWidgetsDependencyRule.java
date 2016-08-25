@@ -1,6 +1,5 @@
 package de.axelfaust.alfresco.examples.patching.share.surf;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.alfresco.util.PropertyCheck;
@@ -12,8 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.extensions.surf.DojoDependencies;
-import org.springframework.extensions.surf.DojoDependencyRule;
-import org.springframework.util.StringUtils;
+import org.springframework.extensions.surf.DojoWidgetsDependencyRule;
 
 /**
  * This special rule implementation will attempt to parse and process the declarative widget model of a page as JSON before falling back to
@@ -22,7 +20,7 @@ import org.springframework.util.StringUtils;
  *
  * @author Axel Faust
  */
-public class JSONAwareWidgetsDependencyRule extends DojoDependencyRule implements InitializingBean
+public class JSONAwareWidgetsDependencyRule extends DojoWidgetsDependencyRule implements InitializingBean
 {
 
     private static final String WIDGET_CONFIG = "config";
@@ -75,7 +73,7 @@ public class JSONAwareWidgetsDependencyRule extends DojoDependencyRule implement
 
             if (!(jsonModel instanceof JSONObject || jsonModel instanceof JSONArray))
             {
-                this.processRegexRulesImpl(null, fileContents, dependencies);
+                super.processRegexRules(null, fileContents, dependencies);
             }
             else
             {
@@ -91,7 +89,7 @@ public class JSONAwareWidgetsDependencyRule extends DojoDependencyRule implement
         }
         else
         {
-            this.processRegexRulesImpl(filePath, fileContents, dependencies);
+            super.processRegexRules(filePath, fileContents, dependencies);
         }
     }
 
@@ -156,7 +154,7 @@ public class JSONAwareWidgetsDependencyRule extends DojoDependencyRule implement
         catch (final JSONException e)
         {
             LOGGER.warn("Error processing JSON model - falling back to regex rules", e);
-            this.processRegexRulesImpl(null, fileContents, dependencies);
+            super.processRegexRules(null, fileContents, dependencies);
         }
     }
 
@@ -180,7 +178,7 @@ public class JSONAwareWidgetsDependencyRule extends DojoDependencyRule implement
         catch (final JSONException e)
         {
             LOGGER.warn("Error processing JSON models - falling back to regex rules", e);
-            this.processRegexRulesImpl(null, fileContents, dependencies);
+            super.processRegexRules(null, fileContents, dependencies);
         }
     }
 
@@ -214,38 +212,6 @@ public class JSONAwareWidgetsDependencyRule extends DojoDependencyRule implement
         else
         {
             this.processModelImpl(widgetModel, dependencies, fileContents);
-        }
-    }
-
-    protected void processRegexRulesImpl(final String filePath, final String fileContents, final DojoDependencies dependencies)
-    {
-        final Matcher m1 = this.getDeclarationRegexPattern().matcher(fileContents);
-        while (m1.find())
-        {
-            if (m1.groupCount() >= this.getTargetGroup())
-            {
-                // The second group in a regex match will contain array of dependencies...
-                final String deps = m1.group(this.getTargetGroup());
-                if (deps != null)
-                {
-                    // Recursively look for nested widgets...
-                    this.processRegexRulesImpl(filePath, deps, dependencies);
-
-                    // Find the dependencies in the widgets list...
-                    final Matcher m2 = this.getDependencyRegexPattern().matcher(deps);
-                    while (m2.find())
-                    {
-                        final String dep = m2.group(1);
-                        if (dep != null)
-                        {
-                            // convert dep found in JSON to valid file path - as JSON may encode "/" as "\/"
-                            final String depPath = this.getDojoDependencyHandler().getPath(filePath, StringUtils.replace(dep, "\\/", "/"))
-                                    + ".js";
-                            this.addJavaScriptDependency(dependencies, depPath);
-                        }
-                    }
-                }
-            }
         }
     }
 }
