@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean id="OOTBee-Surf-ModuleDeploymentService-patch" class="de.axelfaust.alfresco.examples.patching.common.spring.ImplementationClassReplacingBeanFactoryPostProcessor">
+        <property name="targetBeanName" value="module.deployment.service" />
+        <property name="originalClassName" value="org.springframework.extensions.surf.ModuleDeploymentService" />
+        <property name="replacementClassName" value="${project.artifactId}.surf.FixedModuleDeploymentService" />
+        <property name="active" value="${OOTBee.patches.Surf.ModuleDeploymentService.enabled}" />
+    </bean>
+
+    <!-- better detection of widget configs in JS sources -->
+    <!-- this supports single- and multi-widget configs -->
+    <!-- this supports variables and members -->
+    <!-- this supports aggregated variable / member names -->
+    <bean id="OOTBee-SurfAikau-widgetsInJSRuleRegex-patch" class="de.axelfaust.alfresco.examples.patching.common.spring.PropertyAlteringBeanFactoryPostProcessor">
+        <property name="targetBeanName" value="define.dojo.widgets.dependency.rule" />
+        <property name="propertyName" value="declarationRegex" />
+        <property name="value" value="&quot;?(?:_+)?(?:widgets?|[\w]+Widgets?|widgets?[A-Z]\w+)(?:_+)?&quot;?[^:=]*?[:=][\r\s\t\n]*\[?(\{(.*)\})\]?" />
+        <property name="active" value="${OOTBee.patches.SurfAikau.widgetsInJSRuleRegex.enabled}" />
+    </bean>
+
+    <bean id="OOTBee-SurfAikau-widgetsInModelRule-patch" class="de.axelfaust.alfresco.examples.patching.common.spring.ImplementationClassReplacingBeanFactoryPostProcessor">
+        <property name="targetBeanName" value="define.dojo.widgets.dependency.rule" />
+        <property name="originalClassName" value="org.springframework.extensions.surf.DojoWidgetsDependencyRule" />
+        <property name="replacementClassName" value="${project.artifactId}.surf.JSONAwareWidgetsDependencyRule" />
+        <property name="active" value="${OOTBee.patches.SurfAikau.widgetsInModelRule.enabled}" />
+    </bean>
+</beans>
